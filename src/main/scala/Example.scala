@@ -19,5 +19,11 @@ object Example {
     df.show()
 
 
+    val character_to_int = sc.textFile("resources/characters.csv").collect()
+    val n_characters = character_to_int.length
+
+    val wins_matrix = Array.ofDim[Int](n_characters, n_characters)
+    wins_matrix.foreach(it => println(it.mkString("[", ", ", "]")))
+
   }
 }
