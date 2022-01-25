@@ -13,8 +13,11 @@ object Example {
       .getOrCreate()
 
     // Load local file data
-    val df = spark.read.format("csv").option("header", "true").load("resources/sample_data.csv")
-    df.printSchema()
+    val df = spark.read.format("csv").option("header", "true")
+      .load("resources/sample_data.csv")
+      .select("Stage Name", "Winner Character", "Loser Character")
     df.show()
+
+
   }
 }
