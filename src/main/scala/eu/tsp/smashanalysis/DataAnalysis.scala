@@ -1,9 +1,11 @@
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.{SparkConf, SparkContext}
+package eu.tsp.smashanalysis
+
 import org.apache.spark.mllib.clustering.KMeans
 import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.{SparkConf, SparkContext}
 
-object Example {
+object DataAnalysis {
   def compute_win_rates(spark: SparkSession, sc: SparkContext, data_file_name: String): (Map[(String, String), Double], Map[(String, String), Int]) = {
 
     // Load local file data
@@ -89,7 +91,7 @@ object Example {
 
     val matrix = List.tabulate(n_characters)(i => Vectors.dense(array_of_winrate(characters, i, win_rates)))
     val kmean_input = sc.parallelize(matrix)
-    val clusters = KMeans.train(kmean_input, 3, 30)
+    val clusters = KMeans.train(kmean_input, 5, 100)
 
     val classification = characters.map(character => {
       val kmean_data = matrix(characters_to_int(character))
@@ -97,6 +99,6 @@ object Example {
       (character, cluster)
     })
 
-    classification.groupBy(x => x._2).map(x => (x._1, x._2.map(y=> y._1).mkString(", "))).foreach(x => println(x))
+    classification.groupBy(x => x._2).map(x => (x._1, x._2.map(y => y._1).mkString(", "))).foreach(x => println(x))
   }
 }
