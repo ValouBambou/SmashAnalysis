@@ -75,17 +75,18 @@ object Example {
         win_count = tmp._2
     }
 
+    val characters = sc.textFile("resources/characters.csv").collect()
+    val characters_to_int = characters.zipWithIndex.toMap
+    val n_characters = characters.length
 
-    val avg_win_rates = sc.textFile("resources/characters.csv").map(character => {
+    val avg_win_rates = characters.map(character => {
       val n_total = win_count.filter(x => x._1._1 == character || x._1._2 == character).values.sum
       val n_wins = win_count.filter(x => x._1._1 == character).values.sum
       (character, n_wins, n_total, n_wins.toDouble / n_total)
     })
 
-    avg_win_rates.collect().sortBy(x => x._4).foreach(x => println(x))
-    val characters = sc.textFile("resources/characters.csv").collect()
-    val characters_to_int = sc.textFile("resources/characters.csv").collect().zipWithIndex.toMap
-    val n_characters = characters_to_int.size
+    avg_win_rates.sortBy(x => x._4).foreach(x => println(x))
+
     val matrix = List.tabulate(n_characters)(i => Vectors.dense(array_of_winrate(characters, i, win_rates)))
     val kmean_input = sc.parallelize(matrix)
     val clusters = KMeans.train(kmean_input, 3, 30)
