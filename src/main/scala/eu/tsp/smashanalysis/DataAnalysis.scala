@@ -48,6 +48,10 @@ object DataAnalysis {
     })
   }
 
+  def print_clusters(classification:Array[(String, Int)]): Unit = {
+    classification.groupBy(x => x._2).map(x => (x._1, x._2.map(y => y._1).mkString(", "))).foreach(x => println(x))
+  }
+
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf().setAppName("Read CSV File").setMaster("local[*]")
     val sc = new SparkContext(conf)
@@ -93,12 +97,36 @@ object DataAnalysis {
     val kmean_input = sc.parallelize(matrix)
     val clusters = KMeans.train(kmean_input, 5, 100)
 
+
     val classification = characters.map(character => {
       val kmean_data = matrix(characters_to_int(character))
       val cluster = clusters.predict(kmean_data)
       (character, cluster)
     })
 
-    classification.groupBy(x => x._2).map(x => (x._1, x._2.map(y => y._1).mkString(", "))).foreach(x => println(x))
+    print_clusters(classification)
+
+    val max_total = avg_win_rates.map(x => x._3).max.toDouble
+    val min_total = avg_win_rates.map(x => x._3).min.toDouble
+    val min_wr = avg_win_rates.map(x => x._4).min
+    val max_wr = avg_win_rates.map(x => x._4).max
+
+    val kmean_input2d = sc.parallelize(List.tabulate(n_characters)(i => {
+      val tmp = avg_win_rates(i)
+      // normalize
+      val array = Array((tmp._3.toDouble - min_total) / (max_total - min_total), (tmp._4 - min_wr) / (max_wr - min_wr))
+      Vectors.dense(array)
+    }))
+
+    val clusters2d = KMeans.train(kmean_input2d, 10, 100)
+    val matrix2d = kmean_input2d.collect()
+    val classification2 = characters.map(character => {
+      val kmean_data = matrix2d(characters_to_int(character))
+      println(character + " " + kmean_data.toArray.mkString(","))
+      val cluster = clusters2d.predict(kmean_data)
+      (character, cluster)
+    })
+
+    print_clusters(classification2)
   }
 }
